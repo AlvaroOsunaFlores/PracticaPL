@@ -1,0 +1,4 @@
+program Test5;
+begin
+  writeln('Falta el punto final')
+end

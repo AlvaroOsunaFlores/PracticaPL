@@ -1,0 +1,179 @@
+Cabeceras LL(1) 
+
+CAB(PRG) -> "program" 
+CAB(BLQ) -> CAB(DCLLIST) -> CAB(DCLLIST') -> CAB(DCL) U λ -> CAB(DEFCTE) U CAB(DEFVAR) U CAB(DEFPROC) U CAB(DEFFUN) U λ -> "const" U "var" U "procedure" U "function"
+//CAB(DCLLIST) -> "const" U "var" U "procedure" U "function"
+CAB(DCLLIST) -> "const" U "var" U "procedure" U "function" U λ
+CAB(SENTLIST) -> CAB(SENT) -> CAB(ASIG) -> ID
+CAB(SENTLIST') -> CAB(SENT) -> CAB(ASIG) -> ID U λ
+CAB(DCL) -> "const" U "var" U "procedure" U "function"
+CAB(DEFCTE) -> "const"
+CAB(CTELIST) -> ID 
+CAB(CTELIST') -> ID U λ
+CAB(SIMPVALUE) -> CONSTINT U CONSTREAL U CONSTLIT 
+CAB(DEFVAR) -> "var" 
+CAB(DEFVARLIST) -> CAB(VARLIST) -> ID 
+CAB(DEFVARLST') -> ";"U λ
+CAB(VARLIST) -> ID 
+CAB(DEFPROC) -> "procedure" 
+CAB(DEFFUN) -> "function" 
+CAB(FORMAL_PARAMLIST) -> "(" U λ
+CAB(FORMAL_PARAM) -> CAB(VARLIST) -> ID 
+CAB(TBAS) -> "INTEGER" U "REAL" 
+CAB(SENT) -> CAB(ASIG) U CAB(PROD_CALL) -> "ID" 
+CAB(ASIG) -> "ID" 
+CAB(EXP) -> CAB(FACTOR) -> CAB(SIMPVALUE) U "(" U "ID" -> "CONSTINT" U "CONSTREAL" U "CONSTLIT" U "(" U "ID"
+CAB(EXP') -> CAB(OP) U λ -> CAB(OPARIT) U λ -> "+" U "-" U "*" U "DIV" U "MOD" U λ
+CAB(OP) -> "+" U "-" U "*" U "DIV" U "MOD"
+CAB(OPARIT) -> "+" U "-" U "*" U "DIV" U "MOD"
+CAB(FACTOR) ->  "CONSTINT" U "CONSTREAL" U "CONSTLIT" U "(" U "ID"
+CAB(SUBPARAMLIST) -> "(" U λ
+CAB(EXPLIST) -> CAB(EXP) -> "CONSTINT" U "CONSTREAL" U "CONSTLIT" U "(" U "ID"
+CAB(PROD_CALL) -> "ID" 
+///////////////////////////////////////////////////
+// Opcional//
+///////////////////////////////////////////////////
+CAB(EXPCOND) -> CAB'(FACTORCOND) -> "CONSTINT" U "CONSTREAL" U "CONSTLIT" U "(" U "ID" U "(" U "not"
+CAB(EXPCOND') -> CAB'(OPLOG) U  λ -> "or" U "and" U  λ 
+CAB(OPLOG) -> "or" U "and"
+CAB(FACTORCOND) -> CAB'(EXP) U "(" U "not" -> "CONSTINT" U "CONSTREAL" U "CONSTLIT" U "(" U "ID" U "(" U "not"
+CAB(OPCOMP) -> "<" U ">" U "<=" U ">=" U "=" 
+
+//Ya se habia definido la cabecera de sent ==> añadimos las nuevas sentencias
+CAB(SENT) -> "ID" U "if" U "while" U "repeat" U "for"
+CAB(INC) -> "to" U "downto"
+//Ya se habia definidop la cabecera de prg ==> añadimos las nuevas sentencias
+CAB(PRG) -> "program" U "unit"
+
+
+
+Siguientes LL(1) 
+
+SIG(PRG) -> {$}
+SIG(BLQ) -> {"." U ";"}
+// SIG(DCLLIST) -> {"begin"}
+SIG(DCLLIST') -> {"begin"}
+SIG(SENTLIST) -> {"end"}
+SIG(SENTLIST') -> {"end"}
+SIG(DCL) -> {"const", "var", "procedure", "function", "begin" } //CAB' porque es sin Lambda
+SIG(DEFCTE) -> SIG(DCL)->{"const", "var", "procedure", "function", "begin" }
+SIG(CTELIST) -> SIG(DEFCTE)->{"const", "var", "procedure", "function", "begin" }
+SIG(CTELIST')->SIG(CTELIST)->{"const", "var", "procedure", "function", "begin" }
+SIG(SIMPVALUE) -> {";"} U SIG(FACTOR)->{",",")","+","-","*","DIV","MOD",";"}
+SIG(DEFVAR)->SIG(DCL)->{"const", "var", "procedure", "function", "begin" }
+SIG(DEFVARLIST)-> {";"}
+SIG(DEFVARLIST')->SIG(DEFVARLIST)-> {";"}
+SIG(VARLIST)->{":"}
+SIG(DEFPROC)-> SIG(DCL)->{"const", "var", "procedure", "function", "begin" }
+SIG(DEFFUN)-> SIG(DCL)->{"const", "var", "procedure", "function", "begin" }
+SIG(FORMAL_PARAMLIST)-> {";",":"}
+SIG(FORMAL_PARAM)-> {")"}
+SIG(TBAS) -> {";"} U CAB'(defvarlist') U SIG(defvarlist') U SIG(formal_param) ={";",")"}
+SIG(SENT) -> CAB'(sentlist') U SIG(sentlist') U SIG(sentlist) = {ID,"END"}
+SIG(ASIG)->{";"}
+SIG(EXP)->{",",")"} U CAB'(EXP') U SIG(EXP') U SIG(EXPLIST)->{",",")","+","-","*","DIV","MOD"}
+SIG(EXP')-> SIG(EXP)->{",",")","+","-","*","DIV","MOD"}
+SIG(OP)-> CAB'(exp)->{"(","ID","CONSTINT","CONSTREAL",CONSTLIST"}
+SIG(OPARIT)->SIG(OP)-> CAB'(exp)->{"(","ID","CONSTINT","CONSTREAL",CONSTLIST"}
+SIG(FACTOR)-> CAB'(exp') U SIG(exp')->{",",")","+","-","*","DIV","MOD"}
+SIG(SUBPARAMLIST) -> SIG(FACTOR) U SIG(PROC_CALL)->{",",")","+","-","*","DIV","MOD",";"}
+SIG(EXPLISt)->{")"}
+SIG(PROC_CALL)->{";"}
+///////////////////////////////////////////////////
+// Opcional//
+///////////////////////////////////////////////////
+SIG(EXPCOND)-> "do" U ";" U "then"  ->{"do" , ";","then"}
+SiG(EXPCOND')-> SIG(EXPCOND)->{ "do" , ";" , "then" }
+SIG(OPLOG)->CAB'(FACTORCOND)->{"CONSTINT" , "CONSTREAL" , "CONSTLIT" , "(" , "ID" , "(" , "not"}
+SIG(FACTORCOND)->CAB'(EXPCOND') U SIG(EXPCOND') U SIG(EXPCOND)->{"or","and", "do" , ";" , "then" }
+SIG(OPCOMP)-> CAB'(EXP) ->{"CONSTINT" , "CONSTREAL" , "CONSTLIT" , "(" , "ID"}
+SIG(SENT)//No cambia
+SIG(INC)->CAB'(EXP) ->{"CONSTINT" , "CONSTREAL" , "CONSTLIT" , "(" , "ID"}
+SIG(PRG)//No caambia
+//Cambian los siguientes
+SIG(BLQ) -> {"." U ";"} U "else" U "until" U SIG(SENT) ->{".",";","else","until",ID,"END"}
+SIG(EXP)->{",",")","+","-","*","DIV","MOD"} U CAB'(OPCOMP) U "do" U ")" U SIG(FACTORCOND) U  CAB'(INC)->{",",")","+","-","*","DIV","MOD","do",";","then","or","and","<",">","<=",">=","=","to","downto"}
+
+
+
+Directores GRAMATICA LL(1) Practica.txt 
+
+DIR(PRG ::= "program" ID ";" blq ".") = "program"
+
+DIR(blq ::= dcllist "begin" sentlist "end") = CAB(dcllist) = "const" U "var" U "procedure" U "function" U λ
+
+DIR(sentlist ::= sent sentlist') = ID
+
+DIR(sentlist' ::= sent sentlist') = ID
+DIR(sentlist' ::= ʎ) = SIG(sentlist') = "end"
+
+DIR(dcl ::= defcte) = CAB(DEFCTE) = "const"
+DIR(dcl ::= defvar) = CAB(DEFVAR) = "var"
+DIR(dcl ::= defproc) = CAB(DEFPROC) = "procedure"
+DIR(dcl ::= deffun) = CAB(DEFFUN) -> "function"
+
+DIR(defcte ::= "const" ctelist) = "const"
+DIR(ctelist ::= ID "=" simpvalue ";" ctelist') = ID
+DIR(ctelist' ::= ID "=" simpvalue ";" ctelist') = ID
+DIR(ctelist' ::= ʎ) = SIG(ctelist') = SIG(CTELIST) = {"const", "var", "procedure", "function", "begin"}
+
+DIR(simpvalue ::= CONSTINT) = CONSTINT
+DIR(simpvalue ::= CONSTREAL) = CONSTREAL
+DIR(simpvalue ::= CONSTLIT) = CONSTLIT
+
+DIR(defvar ::= "var" defvarlist ";") = "var"
+
+DIR(defvarlist ::= varlist ":" tbas defvarlist') = CAB(VARLIST) = ID
+DIR(defvarlist' ::=  ";" varlist ":" tbas defvarlist') = ";"
+DIR(defvarlist' ::= ʎ) = SIG(defvarlist') = SIG(DEFVARLIST) = ";"
+
+DIR(varlist ::= ID) = ID
+DIR(varlist ::= ID "," varlist) = ID
+
+DIR(defproc ::= "procedure" ID formal_paramlist ";" blq ";") = "procedure"
+DIR(deffun ::= "function" ID formal_paramlist ":" tbas ";" blq ";") = "function"
+DIR(formal_paramlist ::= ʎ ) = SIG(formal_paramlist) = {";",":"}
+DIR(formal_paramlist ::= "(" formal_param ")" ) = "("
+DIR(formal_param ::= varlist ":" tbas) = CAB'(varlist) = ID
+DIR(formal_param ::= varlist ":" tbas ";" formal_param) = ID
+DIR(tbas ::= "INTEGER") = "INTEGER"
+DIR(tbas ::= "REAL") = "REAL"
+DIR(sent ::= asig ";") = CAB(asig) -> "ID"
+DIR(sent ::= proc_call ";") = CAB(proc_call) -> "ID"
+DIR(asig ::= ID ":=" exp) = CAB(ID) -> "ID"
+DIR(exp ::= factor exp') = CAB(factor) -> "CONSTINT" U "CONSTREAL" U "CONSTLIT" U "(" U "ID"
+DIR(exp' ::= op exp exp') = CAB(op) -> "+" U "-" U "*" U "DIV" U "MOD"
+DIR(exp' ::= ʎ) = SIG(exp') -> {",",")","+","-","*","DIV","MOD"}
+DIR(op ::= oparit) = CAB(oparit) -> "+" U "-" U "*" U "DIV" U "MOD"
+DIR(oparit ::= "+") -> "+"
+DIR(oparit ::= "-") -> "-"
+DIR(oparit ::= "*") -> "*"
+DIR(oparit ::= "div") -> "div"
+DIR(oparit ::= "mod") -> "mod"
+DIR(factor ::= simpvalue) -> CAB(SIMPVALUE) -> CONSTINT U CONSTREAL U CONSTLIT
+DIR(factor ::= "(" exp ")") -> "("
+DIR(factor ::= ID subparamlist) = "ID"
+DIR(subparamlist ::= ʎ) = CAB(SUBPARAMLIST) -> "(" U λ
+DIR(explist ::= exp) = CAB(exp) = CAB(FACTOR) = CAB(SIMPVALUE) U "(" U "ID" = "CONSTINT" U "CONSTREAL" U "CONSTLIT" U "(" U "ID"
+DIR(explist ::= exp "," explist') = CAB(exp) = CAB(FACTOR) = CAB(SIMPVALUE) U "(" U "ID" = "CONSTINT" U "CONSTREAL" U "CONSTLIT" U "(" U "ID"
+DIR(proc_call ::= ID subparamlist) = "ID"
+DIR(expcond ::= factorcond expcond') = CAB'(EXP) U "(" U "not" -> "CONSTINT" U "CONSTREAL" U "CONSTLIT" U "(" U "ID" U "(" U "not"
+DIR(expcond' ::= op expcond expcond') = CAB(op) = "+" U "-" U "*" U "DIV" U "MOD"
+DIR(expcond' ::= ε) = SIG(expcond') = SIG(EXPCOND) = { "do" , ";" , "then" }
+DIR(oplog ::= "or") = "or"
+DIR(oplog ::= "and") = "and"
+DIR(factorcond ::= exp opcomp exp) = CAB(FACTOR) = CAB(SIMPVALUE) U "(" U "ID" -> "CONSTINT" U "CONSTREAL" U "CONSTLIT" U "(" U "ID"
+DIR(factorcond ::= "(" exp ")") = "("
+DIR(factorcond ::= "not" factorcond) = "not"
+DIR(opcomp ::= "<") = "<"
+DIR(opcomp ::= ">") = ">"
+DIR(opcomp ::= "<=") = "<="
+DIR(opcomp ::= ">=") = ">="
+DIR(opcomp ::= "=") = "="
+DIR(sent ::= "if" expcond "then" blq "else" blq) = "if"
+DIR(sent ::= "while" expcond "do" blq) = "while"
+DIR(sent ::= "repeat" blq "until" expcond ";") = "repeat"
+DIR(sent ::= "for" ID ":=" exp inc exp "do" blq) = "for"
+DIR(inc ::= "to") = "to"
+DIR(inc ::= "downto") = "downto"
+DIR(prg ::= "unit" ID ";" dcllist ".") = "unit"

@@ -1,0 +1,128 @@
+prg ::= "program" ID ";" blq "."
+blq ::= dcllist "begin" sentlist "end"
+
+// dcllist ::= decllist'
+dcllist ::= dcl dcllist |  ʎ
+
+sentlist ::= sent sentlist'
+sentlist' ::= sent sentlist' | ʎ
+
+dcl ::= defcte | defvar | defproc | deffun
+defcte ::= "const" ctelist
+ctelist ::= ID "=" simpvalue ";" ctelist'
+ctelist' ::=  ID "=" simpvalue ";" ctelist' | ʎ
+
+simpvalue ::= CONSTINT| CONSTREAL| CONSTLIT
+defvar ::= "var" defvarlist ";"
+
+defvarlist ::= varlist ":" tbas defvarlist'
+defvarlist' ::=  ";" varlist ":" tbas defvarlist' | ʎ
+
+varlist ::= ID | ID "," varlist
+defproc ::= "procedure" ID formal_paramlist ";" blq ";"
+deffun ::= "function" ID formal_paramlist ":" tbas ";" blq ";"
+formal_paramlist ::= ʎ | "(" formal_param ")"
+formal_param ::= varlist ":" tbas | varlist ":" tbas ";" formal_param
+tbas ::= "INTEGER" | "REAL"
+
+sent ::= asig ";" | proc_call ";"
+asig ::= ID ":=" exp
+
+exp ::=  factor exp'
+exp' :: = op exp exp' | ʎ
+
+op ::= oparit
+oparit ::= "+" | "-" | "*" | "div" | "mod"
+factor ::= simpvalue | "(" exp ")" | ID subparamlist
+subparamlist ::= ʎ | "(" explist ")"
+explist ::= exp | exp "," explist
+proc_call ::= ID subparamlist
+
+
+///////////////////////////////////////////////////
+grammar LL1;
+
+prg : 'program' ID ';' blq '.';
+blq : dcllist 'begin' sentlist 'end';
+
+dcllist : dcl dcllist | ;
+
+sentlist : sent sentlist';
+sentlist' : sent sentlist' | ;
+
+dcl : defcte | defvar | defproc | deffun;
+defcte : 'const' ctelist;
+ctelist : ID '=' simpvalue ';' ctelist';
+ctelist' : ID '=' simpvalue ';' ctelist' | ;
+
+simpvalue : CONSTINT | CONSTREAL | CONSTLIT;
+defvar : 'var' defvarlist ';';
+
+defvarlist : varlist ':' tbas defvarlist';
+defvarlist' : ';' varlist ':' tbas defvarlist' | ;
+
+varlist : ID | ID ',' varlist;
+defproc : 'procedure' ID formal_paramlist ';' blq ';';
+deffun : 'function' ID formal_paramlist ':' tbas ';' blq ';';
+
+formal_paramlist : '(' formal_param ')' | ;
+formal_param : varlist ':' tbas | varlist ':' tbas ';' formal_param;
+
+tbas : 'INTEGER' | 'REAL';
+
+sent : asig ';' | proc_call ';';
+asig : ID ':=' exp;
+
+exp : factor exp';
+exp' : op exp exp' | ;
+
+op : oparit;
+oparit : '+' | '-' | '*' | 'div' | 'mod';
+
+factor : simpvalue | '(' exp ')' | ID subparamlist;
+subparamlist : '(' explist ')' | ;
+explist : exp | exp ',' explist;
+
+proc_call : ID subparamlist;
+
+///////////////////////////////////////////////////
+// Opcional//
+///////////////////////////////////////////////////
+expcond ::= factorcond expcond'
+expcond' ::= oplog factorcond expcond' | ε
+oplog ::= "or" | "and"
+factorcond ::= exp opcomp exp | "(" exp ")" | "not" factorcond
+opcomp ::= "<" | ">" | "<=" | ">=" | "="
+
+sent ::=
+"if" expcond "then" blq "else" blq
+| "while" expcond "do" blq
+| "repeat" blq "until" expcond ";"
+| "for" ID ":=" exp inc exp "do" blq
+inc ::= "to" | "downto"
+
+prg ::= "unit" ID ";" dcllist "."
+
+////////////////////////////////////////////////////
+
+prg     : 'unit' ID ';' dcllist '.' ;
+
+sent    : 'if' expcond 'then' blq 'else' blq
+        | 'while' expcond 'do' blq
+        | 'repeat' blq 'until' expcond ';'
+        | 'for' ID ':=' exp inc exp 'do' blq
+        ;
+
+inc     : 'to' | 'downto' ;
+
+expcond : factorcond expcond' ;
+expcond': oplog factorcond expcond' | ;
+
+oplog   : 'or' | 'and' ;
+
+factorcond : exp opcomp exp
+           | '(' exp ')'
+           | 'not' factorcond
+           ;
+
+opcomp  : '<' | '>' | '<=' | '>=' | '=' ;

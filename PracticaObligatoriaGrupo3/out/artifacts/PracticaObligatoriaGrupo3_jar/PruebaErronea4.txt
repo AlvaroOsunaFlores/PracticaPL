@@ -1,0 +1,5 @@
+program Test8;
+var x: BOOLEAN;
+begin
+  x := true;
+end.

@@ -1,0 +1,5 @@
+program Test6;
+var x: INTEGER;
+begin
+  x += 5;
+end.
