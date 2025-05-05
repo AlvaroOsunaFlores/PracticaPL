@@ -1,0 +1,380 @@
+grammar gramaticaG3;
+
+@header {
+    import java.util.*;
+    import java.util.stream.*;
+}
+
+@members {
+    String currentFunctionName = null;
+    String nl = System.lineSeparator();
+    int indentLevel = 0;
+
+    String indent() {
+        return "    ".repeat(indentLevel);
+    }
+
+    String formatBlockContent(String content) {
+        if (content == null || content.isEmpty()) {
+            return indent();
+        }
+        return Arrays.stream(content.split(nl))
+                   .map(line -> line.trim().isEmpty() ? line : indent() + line)
+                   .collect(Collectors.joining(nl));
+    }
+}
+
+// Maneja la estructura completa del programa
+prg returns [String c, String consts]
+    : 'program' ID ';'
+      (proc+=proc_def)*
+      d=declarations
+      b=blq '.'
+      {
+        // 1. Imprime encabezado de C
+        System.out.println("#include <stdio.h>");
+        System.out.println();
+
+        // 2. Manejo condicional de constantes
+        if ($d.consts != null && !$d.consts.trim().isEmpty()) {
+            System.out.print($d.consts.replaceAll("^    ", ""));
+            System.out.println();  // Salto después de las constantes
+        }
+
+        // 3. Imprime todos los procedimientos
+        for (Proc_defContext p : $proc) {
+            System.out.print(p.c);
+        }
+
+        // 4. Maneja el bloque principal (main)
+        indentLevel++;  // Aumenta indentación para el contenido del main
+        String mainContent = formatBlockContent($b.c);  // Formatea el contenido
+
+        // 5. Imprime la función main
+        System.out.println("void main(void) {");
+        // Imprime las declaraciones de variables si existen
+        if ($d.vars != null && !$d.vars.trim().isEmpty()) {
+            System.out.println(formatBlockContent($d.vars));
+        }
+        System.out.println(mainContent);  // Contenido del main
+        indentLevel--;  // Restaura nivel de indentación
+        System.out.println("}");
+      }
+    ;
+
+// Maneja los bloques de código delimitados por begin y end en Pascal
+blq returns [String c]
+    @init { indentLevel++; }  // Incrementa el nivel de indentación al entrar al bloque
+    @after { indentLevel--; }  // Decrementa el nivel de indentación al salir del bloque
+    // Coincide con la estructura begin end en Pascal
+    // sentlist -> procesa la lista de sentencias dentro del bloque y captura el contenido en s
+    : 'begin' s=sentlist 'end' {
+        $c = $s.c;
+      }
+    ;
+
+// Maneja las declaraciones globales de constantes y variables
+// returns -> devuelve dos cadenas: en una acumula las constantes y en otra las variables
+declarations returns [String consts, String vars]
+    // Inicializa ambos strings como vacios
+    @init {
+        $consts = "";
+        $vars = "";
+    }
+    // Busca 0 o más declaraciones de: defcte (constantes) -> añade su contenido a consts
+    //                                 defvar (variables) -> añade su contenido a vars
+    : (defcte { $consts += $defcte.c; } | defvar { $vars += $defvar.c; })*
+    ;
+
+// Maneja las declaraciones de constantes
+defcte returns [String c]
+    // Reconoce la palabra clave const seguida de una lista de constantes (ctelist)
+    // Captura el contenido de ctelist en la variable l
+    : 'const' l=ctelist {
+        // Asigna el valor de l.c a $c
+        $c = $l.c;
+      }
+    ;
+
+// Maneja las listas de constantes
+ctelist returns [String c]
+    // Reconoce el patron identificador = valor (v = simpvalue -> regla que procesa el valor de la constante) ;
+    : ID '=' v=simpvalue ';' {
+        // Genera código C con formato #define
+        $c = "#define " + $ID.text + " " + $v.c + nl;
+      }
+      // Permite más definiciones de constantes
+      (next=ctelist { $c += $next.c; })?
+    ;
+
+// Se encarga de procesar valores simples constantes
+simpvalue returns [String c]
+    : CONSTINT     { $c = $CONSTINT.text; }
+    | CONSTREAL    { $c = $CONSTREAL.text; }
+    | CONSTLIT     { $c = $CONSTLIT.text; }
+    | TRUE        { $c = "1"; }
+    | FALSE       { $c = "0"; }
+    ;
+
+// Maneja las declaraciones de variables
+defvar returns [String c]
+    // Reconoce la palabra clave var seguida de una lista de variables (defvarlist)
+    // Captura el contenido de defvarlist en la variable l
+    : 'var' l=defvarlist {
+        // Asigna el valor de l.c a $c
+        $c = $l.c;
+      }
+    ;
+
+// Procesa grupos de declaraciones de variables con su tipo
+defvarlist returns [String c]
+    // Inicializa el string de resultado
+    @init { $c = ""; }
+    // vl=varlist: Captura la lista de variables
+    // t=tbas: Captura el tipo de variable
+    : (vl=varlist ':' t=tbas ';' { $c += indent() + $t.c + " " + $vl.c + ";" + nl; })+  // Declaraciones en C con la indentacion correcta
+    ;
+
+// Maneja listas de variables separadas por comas
+varlist returns [String c]
+    // id1=ID: Primer identificador
+    // (',' id2+=ID)*: Cero o más variables adicionales
+    : id1=ID (',' id2+=ID)* {
+        $c = $id1.text;
+        // Concatena los nombres con comas
+        for (Token t : $id2) $c += ", " + t.getText();
+      }
+    ;
+
+// Mapea tipos Pascal a tipos C equivalentes
+// TODO: Creo que char y boolean hay que quitarlos
+tbas returns [String c]
+    : 'INTEGER'   { $c = "int"; }
+    | 'REAL'      { $c = "float"; }
+    | 'CHAR'      { $c = "char"; }
+    | 'BOOLEAN'   { $c = "int"; }
+    ;
+
+// Se encarga de convertir procedimientos Pascal en funciones C
+proc_def returns [String c]
+    : 'procedure' ID '(' params? ')' ';'
+      (d=declaraciones_locales)?
+      b=blq
+      (';')?
+      {
+        indentLevel++;
+        String locals = ($d.ctx != null && !$d.vars.isEmpty()) ? formatBlockContent($d.vars) + nl : "";
+        String body = ($b.c != null && !$b.c.isEmpty()) ? formatBlockContent($b.c) + nl : "";
+        indentLevel--;
+        $c = "void " + $ID.text + "(" + ($params.ctx != null ? $params.c : "") + ") {" + nl +
+             locals +
+             body +
+             "}" + nl + nl;
+      }
+    | 'function' ID '(' params? ')' ':' t=tbas ';'
+      {
+        currentFunctionName = $ID.text; // <- Mover aquí, ANTES del bloque
+        indentLevel++;
+      }
+      (d=declaraciones_locales)?
+      b=blq
+      (';')?
+      {
+        String locals = ($d.ctx != null && !$d.vars.isEmpty()) ? formatBlockContent($d.vars) + nl : "";
+        String body = ($b.c != null && !$b.c.isEmpty()) ? formatBlockContent($b.c) + nl : "";
+        $c = $t.c + " " + $ID.text + "(" + ($params.ctx != null ? $params.c : "") + ") {" + nl +
+             locals +
+             body +
+             "}" + nl + nl;
+        currentFunctionName = null;
+        indentLevel--;
+      }
+    ;
+
+declaraciones_locales returns [String vars]
+    @init { $vars = ""; }
+    : (defvar_local { $vars += $defvar_local.c; })+
+    ;
+
+defvar_local returns [String c]
+    : 'var' l=varlist ':' t=tbas ';' {
+        $c = indent() + $t.c + " " + $l.c + ";" + nl;
+      }
+    ;
+
+// Maneja listas de parámetros separados por comas
+params returns [String c]
+    @init { $c = ""; }
+    : (p1=param { $c = $p1.c; } (';' p2=param { $c += ", " + $p2.c; })*)
+    ;
+
+// Procesa un único parámetro en formato Pascal
+param returns [String c]
+    : ID ':' t=tbas {
+        $c = $t.c + " " + $ID.text;
+      }
+    ;
+
+
+sentlist returns [String c]
+    @init { $c = ""; }
+    : (s=sent {
+          if ($s.c != null) {
+              $c += $s.c;
+              if (!$s.c.endsWith(nl)) {
+                  $c += nl;
+              }
+          }
+      })+
+    ;
+
+sent returns [String c]
+    : a=asig ';'     { $c = $a.c + ";" + nl; }
+    | i=if_sent      { $c = $i.c; }
+    | f=for_sent     { $c = $f.c; }
+    | b=blq          { $c = $b.c; }
+    | p=proc_call ';' { $c = $p.c + ";" + nl; }
+    | w=writeln ';'  { $c = $w.c + ";" + nl; }
+    ;
+
+asig returns [String c]
+    : ID ':=' e=exp {
+        if (currentFunctionName != null && $ID.text.equals(currentFunctionName)) {
+            $c = "return " + $e.c;
+        } else {
+            $c = $ID.text + " = " + $e.c;
+        }
+    }
+    ;
+
+if_sent returns [String c]
+    : 'if' e=exp 'then' s1=sent ('else' s2=sent)? {
+        String thenBlock = $s1.c;
+        String elseBlock = ($s2.ctx != null) ?
+            " else {" + nl +
+            $s2.c.replaceAll("(?m)^", "    ") +
+            indent() + "}" : "";
+
+        $c = indent() + "if (" + $e.c + ") {" + nl +
+             thenBlock.replaceAll("(?m)^", "    ") +
+             indent() + "}" + elseBlock + nl;
+      }
+    ;
+
+for_sent returns [String c]
+    : 'for' ID ':=' e1=exp 'to' e2=exp 'do' s=sent {
+        $c = indent() + "for (" + $ID.text + " = " + $e1.c + "; " +
+             $ID.text + " <= " + $e2.c + "; " +
+             $ID.text + "++) {" + nl +
+             $s.c.replaceAll("(?m)^", "    ") +
+             indent() + "}" + nl;
+      }
+    ;
+
+proc_call returns [String c]
+    : ID '(' args=explist? ')' {
+        $c = $ID.text + "(" + ($args.c != null ? $args.c : "") + ")";
+      }
+    ;
+
+writeln returns [String c]
+    : 'writeln' '(' args=writeln_args ')' {
+        $c = "printf(" + $args.c + ")";
+      }
+    ;
+
+writeln_args returns [String c]
+    : (arg+=exp (',' arg+=exp)*) {
+        StringBuilder format = new StringBuilder("\"");
+        StringBuilder params = new StringBuilder();
+
+        for (ExpContext e : $arg) {
+            if (format.length() > 1) format.append(" ");
+            if (params.length() > 0) params.append(", ");
+
+            if (e.getText().startsWith("'")) {
+                format.append("%s");
+                params.append("\"" + e.getText().substring(1, e.getText().length()-1) + "\"");
+            } else if (e.getText().contains(".")) {
+                format.append("%f");
+                params.append(e.c);
+            } else {
+                format.append("%d");
+                params.append(e.c);
+            }
+        }
+
+        format.append("\\n\"");
+        $c = format.toString() + (params.length() > 0 ? ", " + params.toString() : "");
+      }
+    ;
+
+exp returns [String c]
+    : e1=exp op=('*' | '/' | 'div' | 'mod') e2=exp {
+        String opStr = $op.text.equals("div") ? "/" :
+                      $op.text.equals("mod") ? "%" : $op.text;
+        $c = "(" + $e1.c + " " + opStr + " " + $e2.c + ")";
+      }
+    | e1=exp op=('+' | '-') e2=exp {
+        $c = "(" + $e1.c + " " + $op.text + " " + $e2.c + ")";
+      }
+    | e1=exp op=('>' | '<' | '>=' | '<=' | '=' | '<>') e2=exp {
+        String opStr = $op.text.equals("<>") ? "!=" :
+                      $op.text.equals("=") ? "==" : $op.text;
+        $c = "(" + $e1.c + " " + opStr + " " + $e2.c + ")";
+      }
+    | 'not' e=exp { $c = "!" + $e.c; }
+    | f=factor { $c = $f.c; }
+    ;
+
+factor returns [String c]
+    : CONSTINT     { $c = $CONSTINT.text; }
+    | CONSTREAL    { $c = $CONSTREAL.text; }
+    | CONSTLIT     { $c = $CONSTLIT.text; }
+    | ID          { $c = $ID.text; }
+    | '(' e=exp ')' { $c = "(" + $e.c + ")"; }
+    | ID '(' explist? ')' { $c = $ID.text + "(" + ($explist.c != null ? $explist.c : "") + ")"; }
+    | TRUE        { $c = "1"; }
+    | FALSE       { $c = "0"; }
+    ;
+
+explist returns [String c]
+    : e1=exp (',' e2+=exp)* {
+        $c = $e1.c;
+        for (ExpContext ex : $e2) $c += ", " + ex.c;
+      }
+    ;
+
+// Tokens
+PROGRAM   : 'program';
+CONST     : 'const';
+VAR       : 'var';
+BEGIN     : 'begin';
+END       : 'end';
+PROCEDURE : 'procedure';
+FUNCTION  : 'function';
+INTEGER   : 'INTEGER';
+REAL      : 'REAL';
+CHAR      : 'CHAR';
+BOOLEAN   : 'BOOLEAN';
+IF        : 'if';
+THEN      : 'then';
+ELSE      : 'else';
+FOR       : 'for';
+TO        : 'to';
+DO        : 'do';
+NOT       : 'not';
+TRUE      : 'true';
+FALSE     : 'false';
+DIV       : 'div';
+MOD       : 'mod';
+WRITELN   : 'writeln';
+
+ID        : [a-zA-Z][a-zA-Z0-9_]*;
+CONSTINT  : [0-9]+;
+CONSTREAL : [0-9]+ '.' [0-9]* ([eE] [+-]? [0-9]+)?;
+CONSTLIT  : '\'' (~['\\] | '\\\'')* '\'';
+
+WS        : [ \t\r\n]+ -> skip;
+COMMENT1  : '{' ~[\r\n]* '}' -> skip;
+COMMENT2  : '(*' .*? '*)' -> skip;

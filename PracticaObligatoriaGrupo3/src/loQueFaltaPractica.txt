@@ -1,0 +1,13 @@
+// Comentarios lenguaje fuente ignorados (no aparecen en el lenguaje final).
+// Identificadores como constantes numericas y literales se expresan de forma identica
+// INTEGER -> int
+// REAL -> float
+// +, -, * -> igual
+// div -> /
+// mod -> %
+// Cada declaracion de una constante en una nueva linea.
+// Procedimientos tienen que empezar por void.
+// Funciones empiezan por int o float y tienen que devolver algo.
+Hacer ifs, while, repeat, for
+Distinguir entre libreria y programa
+Juntar los parametros del mismo tipo en funciones

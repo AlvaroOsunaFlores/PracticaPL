@@ -1,16 +1,20 @@
 import java.io.*;
 import org.antlr.v4.runtime.*;
-import org.antlr.v4.runtime.tree.ParseTree;
 
 public class Main {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         try{
             CharStream input = CharStreams.fromFileName(args[0]);
             gramaticaG3Lexer analex = new gramaticaG3Lexer(input);
             CommonTokenStream tokens = new CommonTokenStream(analex);
             gramaticaG3Parser anasint = new gramaticaG3Parser(tokens);
-            ParseTree parseTree = anasint.prg();
-            System.out.println(parseTree.toStringTree(anasint));
+            // Eliminar los listeners por defecto
+            anasint.removeErrorListeners();
+            analex.removeErrorListeners();
+            // Añadir tu listener personalizado
+            anasint.addErrorListener(new CustomErrorListener());
+            analex.addErrorListener(new CustomErrorListener());
+            anasint.prg();
         } catch (org.antlr.v4.runtime.RecognitionException e) {
             //Fallo al reconocer la entrada
             System.err.println("REC " + e.getMessage());

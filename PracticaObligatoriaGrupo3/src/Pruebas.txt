@@ -1,0 +1,20 @@
+program Pruebas;
+procedure resta(a: INTEGER; b: INTEGER);
+begin
+  a := a - b;
+end;
+function suma(a: INTEGER; b: INTEGER): INTEGER;
+begin
+  resta(a, b);
+  suma := a + b;
+end;
+const
+  PI = 3.1416;
+  X = 343;
+  C = 3485;
+var
+  x, y: INTEGER;
+begin
+  x := 10 + 5 - 6 * 2;
+  x := suma(5, 2);
+end.

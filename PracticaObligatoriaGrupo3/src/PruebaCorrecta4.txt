@@ -1,0 +1,8 @@
+program Test4;
+var i: INTEGER;
+begin
+  for i := 1 to 10 do
+    begin
+      writeln(i);
+    end
+end.

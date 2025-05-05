@@ -1,0 +1,32 @@
+program BuclesAnidados;
+    var
+      i, j, suma: INTEGER;
+    begin
+      suma := 0;
+      i := 1;
+
+      while (i <= 10) and (suma < 50) do
+      begin
+        suma := suma + i;
+        i := i + 1;
+      end
+
+      for j := 1 to 5 do
+      begin
+        if j mod 2 = 0 then
+            begin
+                writeln('j es par');
+            end
+        else
+            begin
+                writeln('j es impar');
+            end
+      end
+
+      i := 0;
+      repeat
+        begin
+            i := i + 2;
+        end
+      until i > 10;
+    end.

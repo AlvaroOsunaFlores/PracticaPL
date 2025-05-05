@@ -1,0 +1,25 @@
+program OperacionesReales;
+    var
+      a, b, c: REAL;
+    begin
+      a := 3.5;
+      b := 2.5;
+
+      c := a + b;
+
+      if c > 5.0 then
+      begin
+        c := c * 2.0;
+        writeln('c duplicado');
+      end
+
+      while c > 1.0 do
+      begin
+        c := c - 0.5;
+      end
+
+      if (a < 4.0) and (b < 3.0) then
+        begin
+            writeln('Ambos valores son pequenos');
+        end
+    end.

@@ -1,0 +1,32 @@
+program FuncionesYProcedimientos;
+    var
+      x, y, resultado: INTEGER;
+
+    procedure Intercambiar(a, b: INTEGER);
+    var
+      temp: INTEGER;
+    begin
+      temp := a;
+      a := b;
+      b := temp;
+      writeln('Valores intercambiados');
+    end;
+
+    function Sumar(a, b: INTEGER): INTEGER;
+    begin
+      Sumar := a + b;
+    end;
+
+    begin
+      x := 10;
+      y := 20;
+
+      Intercambiar(x, y);
+
+      resultado := Sumar(x, y);
+
+      if resultado > 25 then
+        begin
+            writeln('Resultado mayor que 25');
+        end
+    end.

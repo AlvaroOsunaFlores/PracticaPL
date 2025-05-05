@@ -1,0 +1,41 @@
+program ExpresionesComplejas;
+    var
+      a, b, c: INTEGER;
+      x, y: REAL;
+
+    function funcion(a, b: INTEGER): INTEGER;
+       begin
+          Sumar := a + b;
+       end;
+    begin
+      a := 5;
+      b := 10;
+      c := 15;
+      x := 2.5;
+      y := 3.5;
+
+      if (a > b) and (x < y) then
+        begin
+            writeln('Primera condicion verdadera');
+        end
+
+      if (a < b) and c > a or x < y then
+        begin
+            writeln('Segunda condicion verdadera');
+        end
+
+      if not (a > b) and (c > a) then
+      begin
+        a := a + 1;
+        b := b - 1;
+      end
+      else
+        begin
+            c := c * 2;
+        end
+
+      if (a + 1) < b and c > 1 div (2 + x)  or  (funcion(a, b)) then
+        begin
+            writeln('Condicion compleja verdadera');
+        end
+    end.

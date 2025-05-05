@@ -1,0 +1,29 @@
+program Demo;
+
+const
+    LIMIT = 100;
+    RATE = 1.5;
+
+var
+    x, y, z: INTEGER;
+    t, result: REAL;
+
+
+procedure fun1;
+begin
+
+    fun1 := a div 2;
+end;
+
+begin
+    x := 20;
+    t := 3.5;
+
+    y := fun1(x, t);
+
+    writeln('Input x: ', x);
+    writeln('Input t: ', t);
+    writeln('Result from fun1: ', y);
+    writeln('Constant LIMIT: ', LIMIT);
+    writeln('Constant RATE: ', RATE);
+end.

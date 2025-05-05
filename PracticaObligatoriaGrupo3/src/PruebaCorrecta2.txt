@@ -1,0 +1,15 @@
+program Test2;
+const PI = 3.1416;
+var radio, area: REAL;
+begin
+  radio := 5.0;
+  area := PI * radio * radio;
+  if area > 10 then
+    begin
+      area := area - 2;
+    end
+  else
+    begin
+      area := area + 2;
+    end
+end.
