@@ -15,12 +15,12 @@ Juntar los parametros del mismo tipo en funciones
 ///////////////////////////////////////////////////////////////////////////
 ERRORES SEMANTICOS
 
-- Uso de variables, constantes, funciones no declaradas
+- Uso de variables, constantes, funciones no declaradas -> HECHO
 begin
     y := 10;
 end.
 
-- Asignación de un tipo incompatible.
+- Asignación de un tipo incompatible. ->
 var x : INTEGER;
 begin
     x := 'texto';

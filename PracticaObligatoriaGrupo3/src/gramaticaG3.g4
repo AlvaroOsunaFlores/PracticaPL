@@ -1,18 +1,20 @@
 grammar gramaticaG3;
 
 @header {
-import java.util.*;
+    import java.util.*;
 }
 
 @members {
-    int nivel = 1;  // Controla la indentación en la generación de código.
-    String nombreFuncionActual = null;  // Almacena el nombre de la función actualmente procesada.
-    String constantes = "";  // Almacena las constantes declaradas en el programa.
-    String funciones = "";  // Almacena las definiciones de funciones y procedimientos.
+    int nivel = 1;
+    String nombreFuncionActual = null;
+    String constantes = "";
+    String funciones = "";
+    List<String> identificadores = new ArrayList<>();
     String indent() {
         return "    ".repeat(nivel);
     }
 }
+
 
 // Regla que define la estructura de un programa principal o una unidad (unit).
 prg returns [String text]
@@ -76,7 +78,10 @@ defcte returns [String text]
 // Lista de constantes.
 ctelist returns [String text]
     // Define constantes como #define en C.
-    : ID '=' v=simpvalue ';' r=ctelistP { $text = "#define " + $ID.text + " " + $v.text + "\n" + $r.text; }
+    : ID '=' v=simpvalue ';' r=ctelistP {
+        $text = "#define " + $ID.text + " " + $v.text + "\n" + $r.text;
+        identificadores.add($ID.text);
+    }
     ;
 
 ctelistP returns [String text]
@@ -116,14 +121,23 @@ defvarlistP returns [String text]
 
 // Regla para nombres de variables separadas por ','
 varlist returns [String text]
-    : ID { $text = $ID.text; }  // Variable única.
-    | ID ',' r=varlist { $text = $ID.text + ", " + $r.text; }  // // Múltiples variables separadas por coma.
+    // Variable única.
+    : ID {
+        $text = $ID.text;
+        identificadores.add($ID.text);
+    }
+    // Múltiples variables separadas por coma.
+    | ID ',' r=varlist {
+        identificadores.add($ID.text);
+        $text = $ID.text + ", " + $r.text;
+    }
     ;
 
 // Regla para definir procedimientos.
 defproc returns [String text]
     : 'procedure' ID f=formal_paramlist ';' b=blq ';' {
         // Genera la definición de un procedimiento sin valor de retorno.
+        identificadores.add($ID.text);
         funciones += "void " + $ID.text + "(" + $f.text + ") {\n" + $b.text + "}\n\n";
     }
     ;
@@ -132,6 +146,7 @@ defproc returns [String text]
 deffun returns [String text]
     : 'function' ID f=formal_paramlist ':' t=tbas ';' {
         // Almacena el nombre de la función.
+        identificadores.add($ID.text);
         nombreFuncionActual = $ID.text;
     } b=blq ';' {
         // Genera la cabecera de la función, completa con el bloque y la agrega a las funciones globales.
@@ -214,6 +229,9 @@ sent returns [String text]
 // Regla para manejar asignaciones.
 asig returns [String text]
     : ID ':=' e=exp {
+        if (!identificadores.contains($ID.text)){
+            System.err.println("Variable no declarada: " + $ID.text + " en la línea " + $ID.getLine() + ", columna " + $ID.getCharPositionInLine());
+        }
         // Si la asignación corresponde al nombre de la función actual, lo interpreta como una instrucción "return".
         if (nombreFuncionActual != null && $ID.text.equals(nombreFuncionActual)) {
             $text = "return " + $e.text;
@@ -258,7 +276,12 @@ factor returns [String text]
     // Un factor puede ser una expresión entre paréntesis.
     | '(' e=exp ')' { $text = "(" + $e.text + ")"; }
     // Un factor puede ser una variable o una llamada a función con parámetros.
-    | ID sub=subparamlist { $text = $ID.text + $sub.text; }
+    | ID sub=subparamlist {
+        if (!identificadores.contains($ID.text)) {
+            System.err.println("Variable no declarada: " + $ID.text + " en la línea " + $ID.getLine() + ", columna " + $ID.getCharPositionInLine());
+        }
+        $text = $ID.text + $sub.text;
+    }
     ;
 
 // Regla que maneja lista de parámetros.
