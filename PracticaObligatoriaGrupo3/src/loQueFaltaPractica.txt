@@ -12,4 +12,82 @@ Hacer ifs, while, repeat, for
 Distinguir entre libreria y programa
 Juntar los parametros del mismo tipo en funciones
 
-// Tiene que salir en el unit la lista de declaraciones
+///////////////////////////////////////////////////////////////////////////
+ERRORES SEMANTICOS
+
+- Uso de variables, constantes, funciones no declaradas
+begin
+    y := 10;
+end.
+
+- Asignación de un tipo incompatible.
+var x : INTEGER;
+begin
+    x := 'texto';
+end.
+
+- Llamada a función con número incorrecto de parametros.
+function suma(a : INTEGER; b : INTEGER): INTEGER;
+begin
+    suma := a + b;
+end;
+
+begin
+    suma(5);
+end.
+
+- Asignación a una constante.
+const PI = 3.14;
+begin
+    PI := 3.1416;
+end.
+
+- Redefinición de identificadores.
+var
+    x: INTEGER;
+    x: INTEGER;
+
+- No puede haber variables constantes y funciones con el mismo nombre.
+function calcular(): INTEGER;
+begin
+    calcular := 5;
+end;
+
+var calcular : REAL;
+
+- Acceso a parámetro fuera de su ámbito.
+procedure test(a : INTEGER);
+begin
+end;
+
+begin
+    writeln(a);
+end.
+
+- Duplicación de parámetros en funciones o procedimientos.
+procedure procesar(a : INTEGER; a : REAL);
+begin
+end;
+
+- Uso de función sin usar su valor (solo si se quiere forzar un estilo correcto).
+function cuadrado(x : INTEGER) : INTEGER;
+begin
+    cuadrado := x * x;
+end;
+
+begin
+    cuadrado(5);
+end.
+
+- Return sin valor en función.
+function suma(x : INTEGER) : INTEGER;
+begin
+    return;
+end;
+
+- Return en un procedimiento:
+procedure muestra();
+begin
+    return 5;
+end;
+

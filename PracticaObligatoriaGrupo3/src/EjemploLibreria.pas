@@ -17,4 +17,4 @@ begin
   Multiplica := a * b;
 end;
 
-end.
+.
