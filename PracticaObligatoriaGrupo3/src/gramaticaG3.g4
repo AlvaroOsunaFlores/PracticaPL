@@ -18,12 +18,12 @@ import java.util.*;
 prg returns [String text]
     : 'program' ID ';' b=blq '.' {
         // Genera el código principal, incluyendo encabezados, constantes, funciones y el bloque principal.
-        $text = "#include <stdio.h>\n" + constantes + "\n" + funciones + "void main(void) {\n" + $b.text + "}";
+        $text = constantes + "\n" + funciones + "void main(void) {\n" + $b.text + "}";
         System.out.println($text);
     }
     | 'unit' ID ';' dcllist '.' {
         // Genera código para una unidad sin un bloque principal.
-        $text = "#include <stdio.h>\n\n" + funciones;
+        $text = constantes + "\n" + funciones;
         System.out.println($text);
     }
     ;
