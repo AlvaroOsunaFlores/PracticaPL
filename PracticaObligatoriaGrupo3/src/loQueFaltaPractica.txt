@@ -11,3 +11,5 @@
 Hacer ifs, while, repeat, for
 Distinguir entre libreria y programa
 Juntar los parametros del mismo tipo en funciones
+
+// Tiene que salir en el unit la lista de declaraciones

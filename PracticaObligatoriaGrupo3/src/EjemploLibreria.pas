@@ -1,12 +1,6 @@
 unit MathLib;
 
-interface
-
-function Suma(a, b: INTEGER): INTEGER;
-function Resta(a, b: INTEGER): INTEGER;
-function Multiplica(a, b: INTEGER): INTEGER;
-
-implementation
+const PI = 3.14;
 
 function Suma(a, b: INTEGER): INTEGER;
 begin
